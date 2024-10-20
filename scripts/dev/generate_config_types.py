@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-from textwrap import dedent
+import pathlib
+import textwrap
 from typing import Union, cast
 from collections.abc import Mapping
 from typing_extensions import TypeAlias, assert_never
@@ -47,10 +47,10 @@ def _get_type_hint(typ: configtypes.ConfigType) -> str:  # noqa: C901
 
     valid_values = typ.get_valid_values()
     if valid_values:
-        return f'Literal[{", ".join(literal(k) for k in valid_values.values)}]'
+        return f'Literal[{", ".join(repr(k) for k in valid_values.values)}]'
     if isinstance(typ, configtypes.MappingType):
         # note: should be redundant, but means we can get exhaustive type matching
-        return f'Literal[{", ".join(literal(k) for k in typ.MAPPING.keys())}]'
+        return f'Literal[{", ".join(repr(k) for k in typ.MAPPING.keys())}]'
 
     if isinstance(
         typ,
@@ -112,7 +112,7 @@ def generate_config_types(config_data: Mapping[str, Option]) -> str:
     """Generate the `ConfigContainer` dataclass and all nested types."""
     output = [
         triple_quote(
-            dedent("""
+            textwrap.dedent("""
                 This file defines static types for the `c` variable in `config.py`.
 
                 This is auto-generated from the `scripts/dev/generate_config_types.py` file.
@@ -211,10 +211,10 @@ def literal(v: str) -> str:
 
 
 def triple_quote(v: str) -> str:
-    r"""surround the given string with trible double quotes."""
+    """surround the given string with trible double quotes."""
     # some option descriptions use `\+` which isn't a valid escape sequence
     # in python docstrings, so just escape it.
-    return '"""' + v.replace("\\+", "\\\\+") + '"""'
+    return '"""' + v.replace(r"\+", r"\\+") + '"""'
 
 
 def main():
@@ -223,7 +223,7 @@ def main():
     generated_code = generate_config_types(configdata.DATA)
 
     output_file = (
-        Path(__file__).parent.parent.parent
+        pathlib.Path(__file__).parent.parent.parent
         / "qutebrowser"
         / "config"
         / "configcontainer.py"
